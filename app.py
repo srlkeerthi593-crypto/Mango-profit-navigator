@@ -30,20 +30,61 @@ html, body, [class*="css"] {
 /* === SIDEBAR === */
 [data-testid="stSidebar"] {
   background: linear-gradient(180deg, #061209 0%, #0d2e1a 50%, #061209 100%) !important;
-  border-right: 1px solid rgba(82,183,136,0.2) !important;
+  border-right: 1px solid rgba(82,183,136,0.25) !important;
 }
-[data-testid="stSidebar"] * { color: #c8f0d0 !important; }
-[data-testid="stSidebar"] h3 { color: #52b788 !important; font-size: 1.1rem !important; }
-[data-testid="stSidebar"] .stTextInput input,
-[data-testid="stSidebar"] .stSelectbox > div > div,
-[data-testid="stSidebar"] .stNumberInput input {
-  background: rgba(82,183,136,0.1) !important;
-  color: #e8fdf0 !important;
-  border: 1px solid rgba(82,183,136,0.35) !important;
+[data-testid="stSidebar"] * { color: #e8fdf0 !important; }
+[data-testid="stSidebar"] h3 { color: #74d4a0 !important; font-size: 1.1rem !important; }
+[data-testid="stSidebar"] label { color: #a7f3d0 !important; font-weight: 700 !important; font-size: 13px !important; }
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] .stMarkdown { color: #c8f0d0 !important; }
+
+/* Inputs: light bg so dark text is always readable */
+[data-testid="stSidebar"] .stTextInput input {
+  background: #e0f7eb !important;
+  color: #061209 !important;
+  border: 2px solid #52b788 !important;
   border-radius: 10px !important;
   font-family: inherit !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  caret-color: #061209 !important;
 }
-[data-testid="stSidebar"] label { color: #74c89b !important; font-weight: 600 !important; }
+[data-testid="stSidebar"] .stTextInput input::placeholder { color: #4a8a60 !important; opacity: 1 !important; }
+[data-testid="stSidebar"] .stTextInput input:focus {
+  background: #f0fdf4 !important;
+  border-color: #2d6a4f !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(82,183,136,0.3) !important;
+}
+[data-testid="stSidebar"] .stNumberInput input {
+  background: #e0f7eb !important;
+  color: #061209 !important;
+  border: 2px solid #52b788 !important;
+  border-radius: 10px !important;
+  font-family: inherit !important;
+  font-weight: 800 !important;
+  font-size: 16px !important;
+  caret-color: #061209 !important;
+  text-align: center !important;
+}
+[data-testid="stSidebar"] .stNumberInput input:focus {
+  background: #f0fdf4 !important;
+  border-color: #2d6a4f !important;
+}
+[data-testid="stSidebar"] .stNumberInput button {
+  background: #a7f3d0 !important;
+  color: #061209 !important;
+  border-radius: 6px !important;
+  border: none !important;
+}
+[data-testid="stSidebar"] .stSelectbox > div > div {
+  background: #e0f7eb !important;
+  color: #061209 !important;
+  border: 2px solid #52b788 !important;
+  border-radius: 10px !important;
+  font-family: inherit !important;
+  font-weight: 600 !important;
+}
+[data-testid="stSidebar"] .stSelectbox svg { fill: #061209 !important; }
 
 /* === ANIMATIONS === */
 @keyframes fadeSlideDown {
@@ -64,8 +105,12 @@ html, body, [class*="css"] {
   50%      { background-position: 100% 50%; }
 }
 @keyframes floatMango {
-  0%,100% { transform: translateY(0) rotate(-4deg); }
-  50%      { transform: translateY(-14px) rotate(4deg); }
+  0%,100% { transform: translateY(0) rotate(-6deg); }
+  50%      { transform: translateY(-18px) rotate(6deg); }
+}
+@keyframes floatMango2 {
+  0%,100% { transform: translateY(0) rotate(4deg) scale(1); }
+  50%      { transform: translateY(-12px) rotate(-4deg) scale(1.1); }
 }
 @keyframes pulse {
   0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(82,183,136,0.4); }
@@ -88,46 +133,75 @@ html, body, [class*="css"] {
   0%,100% { box-shadow: 0 0 16px rgba(82,183,136,0.3); }
   50%      { box-shadow: 0 0 32px rgba(82,183,136,0.7), 0 0 60px rgba(82,183,136,0.2); }
 }
+@keyframes orbit {
+  0%   { transform: rotate(0deg) translateX(60px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(60px) rotate(-360deg); }
+}
+@keyframes twinkle {
+  0%,100% { opacity: 0.3; transform: scale(0.8); }
+  50%      { opacity: 1; transform: scale(1.2); }
+}
+@keyframes heroGlow {
+  0%,100% { text-shadow: 0 0 20px rgba(167,243,208,0.3); }
+  50%      { text-shadow: 0 0 40px rgba(167,243,208,0.6), 0 0 80px rgba(255,209,102,0.2); }
+}
 
 /* === HERO === */
 .hero-banner {
-  background: linear-gradient(270deg, #061209, #0d3320, #1a5c38, #0d3320, #061209);
+  background: linear-gradient(270deg, #030f07, #0a2616, #163d24, #0a2616, #030f07);
   background-size: 400% 400%;
   animation: gradientShift 8s ease infinite, fadeSlideDown 0.7s ease;
-  border-radius: 24px;
-  border: 1px solid rgba(82,183,136,0.25);
-  padding: 38px 44px 30px;
-  margin-bottom: 18px;
+  border-radius: 28px;
+  border: 1px solid rgba(82,183,136,0.3);
+  padding: 44px 52px 36px;
+  margin-bottom: 20px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+  box-shadow: 0 12px 60px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px rgba(82,183,136,0.1);
 }
 .hero-banner::before {
   content: '';
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 30% 50%, rgba(82,183,136,0.12) 0%, transparent 60%),
-              radial-gradient(ellipse at 80% 20%, rgba(255,209,102,0.06) 0%, transparent 50%);
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(82,183,136,0.15) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 20%, rgba(255,209,102,0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 60% 90%, rgba(52,183,100,0.08) 0%, transparent 40%);
   pointer-events: none;
 }
+.hero-banner::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(82,183,136,0.12) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  opacity: 0.5;
+}
 .hero-title {
-  font-size: 2.5rem; font-weight: 900; margin: 0;
-  background: linear-gradient(135deg, #ffffff 0%, #a7f3d0 50%, #ffd166 100%);
+  font-size: 2.7rem; font-weight: 900; margin: 0;
+  background: linear-gradient(135deg, #e0fff0 0%, #a7f3d0 40%, #ffd166 80%, #ffb347 100%);
+  background-size: 200% auto;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: none;
   line-height: 1.2;
+  animation: shimmer 4s linear infinite;
+  position: relative; z-index: 1;
 }
 .hero-sub {
-  font-size: 1.05rem; color: #74c89b; margin-top: 10px;
-  font-weight: 500; letter-spacing: 0.2px;
+  font-size: 1.1rem; color: #74c89b; margin-top: 12px;
+  font-weight: 600; letter-spacing: 0.3px;
+  position: relative; z-index: 1;
 }
 .float-mango {
-  animation: floatMango 3.5s ease-in-out infinite;
-  display: inline-block; font-size: 36px;
+  animation: floatMango 3.2s ease-in-out infinite;
+  display: inline-block; font-size: 38px;
+  filter: drop-shadow(0 4px 8px rgba(82,183,136,0.4));
+  position: relative; z-index: 1;
 }
 .float-mango2 {
-  animation: floatMango 4s ease-in-out infinite 0.8s;
-  display: inline-block; font-size: 28px;
+  animation: floatMango2 4s ease-in-out infinite 0.7s;
+  display: inline-block; font-size: 30px;
+  filter: drop-shadow(0 3px 6px rgba(82,183,136,0.3));
+  position: relative; z-index: 1;
 }
 
 /* === TICKER === */
@@ -369,38 +443,68 @@ html, body, [class*="css"] {
 
 /* === BUTTONS === */
 .stButton > button[kind="primary"] {
-  background: linear-gradient(135deg, #0d3320, #1a5c38) !important;
-  border: 1px solid rgba(82,183,136,0.4) !important;
+  background: linear-gradient(135deg, #0d3320 0%, #1a5c38 100%) !important;
+  border: 1.5px solid rgba(82,183,136,0.55) !important;
   border-radius: 12px !important; font-weight: 800 !important;
-  font-size: 14px !important; color: #a7f3d0 !important;
-  transition: all 0.2s !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
-  font-family: inherit !important;
+  font-size: 13px !important; color: #a7f3d0 !important;
+  transition: all 0.22s !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+  font-family: 'Baloo 2', 'Noto Sans Telugu', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Gujarati', 'Noto Sans Kannada', sans-serif !important;
+  white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
 }
 .stButton > button[kind="primary"]:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(82,183,136,0.3) !important;
-  border-color: rgba(82,183,136,0.7) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 10px 28px rgba(82,183,136,0.35) !important;
+  border-color: rgba(82,183,136,0.85) !important;
+  background: linear-gradient(135deg, #163d24 0%, #2d6a4f 100%) !important;
 }
 .stButton > button[kind="secondary"] {
-  background: rgba(82,183,136,0.08) !important;
-  border: 1px solid rgba(82,183,136,0.25) !important;
+  background: rgba(82,183,136,0.07) !important;
+  border: 1px solid rgba(82,183,136,0.22) !important;
   border-radius: 12px !important; color: #74c89b !important;
-  font-family: inherit !important;
+  font-family: 'Baloo 2', 'Noto Sans Telugu', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Gujarati', 'Noto Sans Kannada', sans-serif !important;
+  font-size: 13px !important; font-weight: 600 !important;
+  white-space: nowrap !important; transition: all 0.2s !important;
 }
-.stTabs [data-baseweb="tab-list"] { background: rgba(6,18,9,0.8) !important; border-radius: 12px !important; gap: 4px !important; }
-.stTabs [data-baseweb="tab"] { color: #74c89b !important; font-weight: 700 !important; border-radius: 10px !important; font-family: inherit !important; }
-.stTabs [aria-selected="true"] { background: linear-gradient(135deg, #0d3320, #1a5c38) !important; color: #a7f3d0 !important; }
+.stButton > button[kind="secondary"]:hover {
+  background: rgba(82,183,136,0.15) !important;
+  border-color: rgba(82,183,136,0.42) !important;
+  transform: translateY(-1px) !important;
+}
+.stTabs [data-baseweb="tab-list"] {
+  background: rgba(4,12,7,0.85) !important; border-radius: 14px !important;
+  gap: 4px !important; padding: 4px !important;
+  border: 1px solid rgba(82,183,136,0.15) !important;
+}
+.stTabs [data-baseweb="tab"] {
+  color: #52b788 !important; font-weight: 700 !important;
+  border-radius: 10px !important; font-family: inherit !important;
+  font-size: 13px !important;
+}
+.stTabs [aria-selected="true"] {
+  background: linear-gradient(135deg, #0d3320, #1a5c38) !important;
+  color: #a7f3d0 !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important;
+}
 
-/* Streamlit elements dark */
+/* Streamlit elements */
 .stDownloadButton > button {
   background: linear-gradient(135deg, #1a5c38, #2d6a4f) !important;
-  border: 1px solid rgba(82,183,136,0.4) !important;
+  border: 1.5px solid rgba(82,183,136,0.5) !important;
   color: #a7f3d0 !important; border-radius: 12px !important;
-  font-family: inherit !important;
+  font-family: inherit !important; font-weight: 800 !important;
+  transition: all 0.2s !important;
 }
-div[data-testid="stMarkdownContainer"] p { color: #c8f0d0; }
+.stDownloadButton > button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(82,183,136,0.3) !important;
+}
+div[data-testid="stMarkdownContainer"] p { color: #c8f0d0 !important; }
 .stSelectbox label, .stNumberInput label, .stTextInput label { color: #74c89b !important; font-weight: 700 !important; }
+/* Spinner */
+.stSpinner > div { border-top-color: #52b788 !important; }
+/* Error/success messages */
+.stAlert { border-radius: 12px !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1014,17 +1118,35 @@ lang=st.session_state.lang; tr=T[lang]
 
 # ── LANGUAGE SELECTOR ──
 def lang_bar():
-    cols = st.columns([1,1,1,1,1,1,4,1] if st.session_state.logged_in else [1,1,1,1,1,1,5])
-    lang_opts = [("en","🇬🇧 English"),("te","తె తెలుగు"),("hi","हि हिंदी"),("ta","த தமிழ்"),("gu","ગુ ગુજરાતી"),("kn","ಕ ಕನ್ನಡ")]
-    for i,(col,(lc,lbl)) in enumerate(zip(cols[:6], lang_opts)):
+    # Use HTML for language buttons so scripts render correctly
+    lang_opts = [
+        ("en", "🇬🇧", "English"),
+        ("te", "🌿", "తెలుగు"),
+        ("hi", "🇮🇳", "हिंदी"),
+        ("ta", "🌺", "தமிழ்"),
+        ("gu", "🦁", "ગુજરાતી"),
+        ("kn", "🐘", "ಕನ್ನಡ"),
+    ]
+    cur = st.session_state.lang
+    cols = st.columns([1,1,1,1,1,1,3,1] if st.session_state.logged_in else [1,1,1,1,1,1,4])
+    for i, (col, (lc, icon, name)) in enumerate(zip(cols[:6], lang_opts)):
         with col:
-            if st.button(lbl, key=f"lang_{lc}", use_container_width=True,
-                         type="primary" if st.session_state.lang==lc else "secondary"):
-                st.session_state.lang=lc; st.rerun()
-    if st.session_state.logged_in:
+            active = cur == lc
+            if st.button(
+                f"{icon} {name}",
+                key=f"lang_{lc}",
+                use_container_width=True,
+                type="primary" if active else "secondary",
+                help=name
+            ):
+                st.session_state.lang = lc
+                st.rerun()
+    if st.session_state.logged_in and len(cols) > 7:
         with cols[7]:
             if st.button(f"🔴 {tr['logout']}", use_container_width=True):
-                st.session_state.logged_in=False; st.session_state.results=None; st.rerun()
+                st.session_state.logged_in = False
+                st.session_state.results = None
+                st.rerun()
 
 # ── AUTH SCREEN ──
 if not st.session_state.logged_in:
@@ -1190,25 +1312,103 @@ if st.session_state.results:
     
     lang_voice_map = {"en":"en-IN","te":"te-IN","hi":"hi-IN","ta":"ta-IN","gu":"gu-IN","kn":"kn-IN"}
     voice_lang = lang_voice_map.get(lang, "en-IN")
-    safe_text = top3_text.replace("`", "'").replace("\\", "")
+    safe_text = top3_text.replace("`", "'").replace("\\", "").replace('"', "'")
     voice_js = f"""
+    <style>
+    .voice-fab {{
+        display: inline-flex; align-items: center; gap: 10px;
+        background: linear-gradient(135deg, #1a5c38, #2d8a5e);
+        border: 2px solid rgba(82,183,136,0.6);
+        border-radius: 50px; padding: 12px 24px;
+        color: #a7f3d0; font-weight: 800; font-size: 14px;
+        cursor: pointer; transition: all 0.25s;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.4), 0 0 0 0 rgba(82,183,136,0.5);
+        font-family: inherit; letter-spacing: 0.3px;
+        animation: voicePulse 2.5s ease-in-out infinite;
+    }}
+    .voice-fab:hover {{
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 10px 32px rgba(82,183,136,0.4), 0 0 0 6px rgba(82,183,136,0.15);
+    }}
+    .voice-fab.speaking {{
+        background: linear-gradient(135deg, #7c1a1a, #a83232);
+        border-color: rgba(255,100,100,0.6);
+        color: #ffd0d0;
+        animation: speakingPulse 0.8s ease-in-out infinite;
+    }}
+    .voice-icon {{ font-size: 20px; }}
+    @keyframes voicePulse {{
+        0%,100% {{ box-shadow: 0 6px 24px rgba(0,0,0,0.4), 0 0 0 0 rgba(82,183,136,0.5); }}
+        50% {{ box-shadow: 0 6px 24px rgba(0,0,0,0.4), 0 0 0 8px rgba(82,183,136,0); }}
+    }}
+    @keyframes speakingPulse {{
+        0%,100% {{ box-shadow: 0 6px 24px rgba(200,50,50,0.4), 0 0 0 0 rgba(255,100,100,0.5); }}
+        50% {{ box-shadow: 0 6px 24px rgba(200,50,50,0.4), 0 0 0 10px rgba(255,100,100,0); }}
+    }}
+    .wave-bars {{ display: inline-flex; align-items: center; gap: 2px; height: 18px; }}
+    .wave-bar {{ width: 3px; background: #a7f3d0; border-radius: 2px; animation: wave 0.6s ease-in-out infinite; }}
+    .wave-bar:nth-child(2) {{ animation-delay: 0.1s; }}
+    .wave-bar:nth-child(3) {{ animation-delay: 0.2s; }}
+    .wave-bar:nth-child(4) {{ animation-delay: 0.3s; }}
+    @keyframes wave {{
+        0%,100% {{ height: 4px; }}
+        50% {{ height: 14px; }}
+    }}
+    </style>
     <script>
-    function speakResults() {{
+    var _speaking = false;
+    function toggleVoice() {{
+        var btn = document.getElementById('voiceBtn');
+        var label = document.getElementById('voiceLabel');
+        if (_speaking) {{
+            window.speechSynthesis.cancel();
+            _speaking = false;
+            btn.classList.remove('speaking');
+            btn.querySelector('.wave-bars').style.display = 'none';
+            label.textContent = '{tr["voice_btn"].replace("🔊 ", "")}';
+            btn.querySelector('.voice-icon').textContent = '🔊';
+            return;
+        }}
         if ('speechSynthesis' in window) {{
             window.speechSynthesis.cancel();
             var text = `{safe_text}`;
             var utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = '{voice_lang}';
-            utterance.rate = 0.9;
-            utterance.pitch = 1.0;
+            utterance.rate = 0.88;
+            utterance.pitch = 1.05;
+            utterance.volume = 1.0;
+            utterance.onstart = function() {{
+                _speaking = true;
+                btn.classList.add('speaking');
+                btn.querySelector('.wave-bars').style.display = 'inline-flex';
+                label.textContent = 'Tap to Stop';
+                btn.querySelector('.voice-icon').textContent = '⏹️';
+            }};
+            utterance.onend = function() {{
+                _speaking = false;
+                btn.classList.remove('speaking');
+                btn.querySelector('.wave-bars').style.display = 'none';
+                label.textContent = '{tr["voice_btn"].replace("🔊 ", "")}';
+                btn.querySelector('.voice-icon').textContent = '🔊';
+            }};
+            utterance.onerror = function() {{
+                _speaking = false;
+                btn.classList.remove('speaking');
+                label.textContent = 'Voice Error';
+            }};
             window.speechSynthesis.speak(utterance);
         }} else {{
-            alert('Voice not supported in this browser');
+            alert('Voice not supported in this browser. Please use Chrome or Edge.');
         }}
     }}
     </script>
-    <button class="voice-btn" onclick="speakResults()">
-      {tr["voice_btn"]}
+    <button class="voice-fab" id="voiceBtn" onclick="toggleVoice()">
+        <span class="voice-icon">🔊</span>
+        <span id="voiceLabel">{tr["voice_btn"].replace("🔊 ", "")}</span>
+        <span class="wave-bars" style="display:none">
+            <span class="wave-bar"></span><span class="wave-bar"></span>
+            <span class="wave-bar"></span><span class="wave-bar"></span>
+        </span>
     </button>
     """
     st.markdown(voice_js, unsafe_allow_html=True)
