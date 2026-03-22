@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import math
 import plotly.graph_objects as go
@@ -1398,68 +1399,96 @@ if st.session_state.results:
     # VOICE READ BUTTON — always use English text for reliability
     lang_voice_map = {"en":"en-IN","te":"te-IN","hi":"hi-IN","ta":"ta-IN","gu":"gu-IN","kn":"kn-IN"}
     voice_lang = lang_voice_map.get(lang, "en-IN")
-    # Build English text for better TTS compatibility across browsers
     top3_text = f"Namaste {R['farmer_name']}. Here are your top 3 market options. "
     for i, r in enumerate(top10[:3]):
         medal = ["Number 1","Number 2","Number 3"][i]
         top3_text += f"{medal}: {r['Name']}, {r['Category']}, {r['Distance_km']} kilometres away, net profit rupees {r['NetProfit']:,}. "
-    safe_text = top3_text.replace("`","'").replace("\\","").replace('"',"'").replace("\n"," ")
+    safe_text = top3_text.replace("'","").replace('"',"").replace("\\","").replace("\n"," ")
     vbtn_label = tr["voice_btn"].replace("🔊 ","")
-    uid = f"v{abs(hash(lang+R['farmer_name']))%10000}"
 
-    voice_js = f"""
-    <style>
-    .vfab {{
-        display:inline-flex; align-items:center; gap:10px;
-        background:linear-gradient(135deg,#0f3d22,#1e6b3e);
-        border:2px solid #3cb87a; border-radius:50px;
-        padding:13px 28px; color:#a7f3d0; font-weight:900; font-size:15px;
-        cursor:pointer; font-family:inherit; letter-spacing:.3px;
-        box-shadow:0 6px 24px rgba(0,0,0,.5);
-        transition:all .25s;
+    # Use st.components.v1.html — this renders in its own iframe with allow="autoplay" 
+    # which enables speechSynthesis properly unlike st.markdown
+    voice_html = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+body{{margin:0;padding:0;background:transparent;}}
+.vfab{{
+    display:inline-flex;align-items:center;gap:10px;
+    background:linear-gradient(135deg,#0f3d22,#1e6b3e);
+    border:2px solid #3cb87a;border-radius:50px;
+    padding:13px 28px;color:#a7f3d0;font-weight:900;font-size:15px;
+    cursor:pointer;font-family:'Segoe UI',sans-serif;letter-spacing:.3px;
+    box-shadow:0 6px 24px rgba(0,0,0,.5);transition:all .25s;
+    animation:spk 2.5s ease-in-out infinite;
+}}
+.vfab:hover{{transform:translateY(-3px);box-shadow:0 10px 30px rgba(60,184,122,.4);}}
+.vfab.on{{background:linear-gradient(135deg,#6b1010,#9e1c1c);border-color:#e74c3c;color:#ffd0d0;animation:none;}}
+.wb{{display:inline-block;width:4px;border-radius:3px;background:currentColor;margin:0 2px;vertical-align:middle;}}
+.wb{{animation:wba .55s ease-in-out infinite;height:4px;}}
+.wb:nth-child(2){{animation-delay:.11s}}.wb:nth-child(3){{animation-delay:.22s}}.wb:nth-child(4){{animation-delay:.33s}}
+@keyframes wba{{0%,100%{{height:3px}}50%{{height:16px}}}}
+@keyframes spk{{0%,100%{{box-shadow:0 6px 24px rgba(0,0,0,.5),0 0 0 0 rgba(60,184,122,.4)}}50%{{box-shadow:0 6px 24px rgba(0,0,0,.5),0 0 0 10px rgba(60,184,122,0)}}}}
+</style></head>
+<body>
+<button class="vfab" id="btn" onclick="toggle()">
+  🔊 <span id="lbl">{vbtn_label}</span>
+  <span id="bars" style="display:none">
+    <span class="wb"></span><span class="wb"></span><span class="wb"></span><span class="wb"></span>
+  </span>
+</button>
+<script>
+var speaking = false;
+var synth = window.speechSynthesis;
+var theText = "{safe_text}";
+
+function toggle() {{
+    if (!synth) {{ alert('Voice not supported. Use Chrome browser.'); return; }}
+    if (speaking) {{
+        synth.cancel();
+        speaking = false;
+        document.getElementById('btn').classList.remove('on');
+        document.getElementById('bars').style.display = 'none';
+        document.getElementById('lbl').textContent = '{vbtn_label}';
+        return;
     }}
-    .vfab:hover {{ transform:translateY(-3px); box-shadow:0 10px 30px rgba(60,184,122,.4); }}
-    .vfab.vspk {{ background:linear-gradient(135deg,#6b1010,#9e1c1c); border-color:#e74c3c; color:#ffd0d0; }}
-    .vwb {{ display:inline-block; width:4px; border-radius:3px; background:currentColor; margin:0 2px; vertical-align:middle; height:4px; }}
-    .vwb {{ animation:vwbA .55s ease-in-out infinite; }}
-    .vwb:nth-child(2){{animation-delay:.11s}} .vwb:nth-child(3){{animation-delay:.22s}} .vwb:nth-child(4){{animation-delay:.33s}}
-    @keyframes vwbA {{ 0%,100%{{height:3px}} 50%{{height:16px}} }}
-    </style>
-    <script>
-    (function(){{
-        var sp=false, uid='{uid}';
-        function getS(){{ return window.speechSynthesis||(window.parent&&window.parent.speechSynthesis)||null; }}
-        window['tvf_'+uid]=function(){{
-            var btn=document.getElementById('vb_'+uid);
-            var lbl=document.getElementById('vl_'+uid);
-            var bars=document.getElementById('vr_'+uid);
-            var synth=getS();
-            if(!synth){{ alert('Voice not supported. Please open in Chrome browser.'); return; }}
-            if(sp){{
-                synth.cancel(); sp=false;
-                btn.classList.remove('vspk'); bars.style.display='none';
-                lbl.textContent='{vbtn_label}'; return;
-            }}
-            synth.cancel();
-            var u=new SpeechSynthesisUtterance('{safe_text}');
-            u.lang='en-IN'; u.rate=0.85; u.pitch=1.05; u.volume=1;
-            u.onstart=function(){{ sp=true; btn.classList.add('vspk'); bars.style.display='inline'; lbl.textContent='⏹ Stop'; }};
-            u.onend=u.onerror=function(){{ sp=false; btn.classList.remove('vspk'); bars.style.display='none'; lbl.textContent='{vbtn_label}'; }};
-            // Workaround: Chrome bug requires getVoices loaded
-            if(synth.getVoices&&synth.getVoices().length===0){{
-                synth.addEventListener('voiceschanged',function(){{ synth.speak(u); }},{{once:true}});
-            }} else {{ synth.speak(u); }}
-        }};
-    }})();
-    </script>
-    <button class="vfab" id="vb_{uid}" onclick="window['tvf_{uid}']()">
-        🔊 <span id="vl_{uid}">{vbtn_label}</span>
-        <span id="vr_{uid}" style="display:none">
-            <span class="vwb"></span><span class="vwb"></span><span class="vwb"></span><span class="vwb"></span>
-        </span>
-    </button>
-    """
-    st.markdown(voice_js, unsafe_allow_html=True)
+    synth.cancel();
+    var u = new SpeechSynthesisUtterance(theText);
+    u.lang = 'en-IN';
+    u.rate = 0.88;
+    u.pitch = 1.05;
+    u.volume = 1.0;
+    u.onstart = function() {{
+        speaking = true;
+        document.getElementById('btn').classList.add('on');
+        document.getElementById('bars').style.display = 'inline';
+        document.getElementById('lbl').textContent = '⏹ Stop';
+    }};
+    u.onend = function() {{
+        speaking = false;
+        document.getElementById('btn').classList.remove('on');
+        document.getElementById('bars').style.display = 'none';
+        document.getElementById('lbl').textContent = '{vbtn_label}';
+    }};
+    u.onerror = function(e) {{
+        speaking = false;
+        document.getElementById('btn').classList.remove('on');
+        document.getElementById('bars').style.display = 'none';
+        document.getElementById('lbl').textContent = '{vbtn_label}';
+    }};
+    // Chrome requires voices to be loaded first
+    var voices = synth.getVoices();
+    if (voices.length === 0) {{
+        synth.onvoiceschanged = function() {{ synth.speak(u); synth.onvoiceschanged = null; }};
+    }} else {{
+        synth.speak(u);
+    }}
+}}
+// Pre-load voices on page load
+if (synth.getVoices) synth.getVoices();
+</script>
+</body></html>"""
+
+    components.html(voice_html, height=70, scrolling=False)
     st.markdown("<br>", unsafe_allow_html=True)
 
     tab1,tab2,tab3,tab4,tab5=st.tabs([tr["tab1"],tr["tab2"],tr["tab3"],tr["tab4"],tr["tab5"]])
@@ -1627,28 +1656,168 @@ if st.session_state.results:
 
     # ── TAB 4: MAP ──
     with tab4:
-        st.markdown("#### 🗺️ Market Map — Top 10 Options")
-        fm=go.Figure()
-        fm.add_trace(go.Scattermapbox(lat=[R["v_lat"]],lon=[R["v_lon"]],mode="markers+text",
-            marker=dict(size=24,color="#ffd166",symbol="star"),text=[f"🏘️ {vd}"],textposition="top right",
-            name=f"🏘️ {vd}",hovertemplate=f"<b>Your Village</b><br>{vd}<extra></extra>"))
-        for i,r in enumerate(top10):
-            col=ROUTE_COLORS[i%len(ROUTE_COLORS)]; medal="🥇" if i==0 else "🥈" if i==1 else "🥉" if i==2 else f"#{i+1}"
-            translated_name = tm(r["Name"],lang)
-            fm.add_trace(go.Scattermapbox(lat=[R["v_lat"],r["Lat"]],lon=[R["v_lon"],r["Lon"]],mode="lines",
-                line=dict(width=3 if i==0 else 2,color=col),opacity=0.9 if i==0 else 0.6,showlegend=False,hoverinfo="skip"))
-            fm.add_trace(go.Scattermapbox(lat=[r["Lat"]],lon=[r["Lon"]],mode="markers+text",
-                marker=dict(size=18 if i<3 else 14,color=col),text=[medal],textposition="top center",
-                name=f"{medal} {translated_name[:28]}",
-                hovertemplate=f"<b>{medal} {translated_name}</b><br>Type: {tc(r['Category'],lang)}<br>Distance: {r['Distance_km']} km<br>Revenue: ₹{r['Revenue']:,}<br>Transport: ₹{r['Transport']:,}<br><b>Net Profit: ₹{r['NetProfit']:,}</b><extra></extra>"))
-        fm.update_layout(
-            mapbox=dict(style="carto-darkmatter",center=dict(lat=R["v_lat"],lon=R["v_lon"]),zoom=8),
-            height=580,margin=dict(l=0,r=0,t=0,b=0),
-            paper_bgcolor="rgba(0,0,0,0)",
-            legend=dict(orientation="v",x=0.01,y=0.99,bgcolor="rgba(6,18,9,0.9)",
-                       bordercolor="rgba(82,183,136,0.3)",borderwidth=1,font=dict(size=11,color="#a7f3d0")),
-            font=dict(family="Baloo 2"))
-        st.plotly_chart(fm,use_container_width=True)
+        # ── OSM LEAFLET MAP WITH OSRM REAL ROAD ROUTING ──
+        st.markdown("#### 🗺️ Real Road Map — Powered by OpenStreetMap")
+        st.caption("🛣️ Routes shown are real road distances via OSRM routing engine")
+
+        markers_js = ""
+        for i, r in enumerate(top10):
+            col = ROUTE_COLORS[i % len(ROUTE_COLORS)]
+            medal = "🥇" if i==0 else "🥈" if i==1 else "🥉" if i==2 else f"#{i+1}"
+            translated_name = tm(r["Name"], lang)
+            cat_t = tc(r["Category"], lang)
+            col_hex = col.lstrip("#")
+            markers_js += f"""
+            {{
+                lat: {r["Lat"]}, lon: {r["Lon"]},
+                name: "{translated_name.replace('"','').replace("'","")}",
+                cat: "{cat_t}",
+                profit: "₹{r['NetProfit']:,}",
+                dist: "{r['Distance_km']} km",
+                rev: "₹{r['Revenue']:,}",
+                trans: "₹{r['Transport']:,}",
+                medal: "{medal}",
+                color: "#{col_hex}",
+                rank: {i}
+            }},"""
+
+        osm_html = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  body,html{{margin:0;padding:0;background:#020d05;font-family:'Segoe UI',sans-serif;}}
+  #map{{width:100%;height:580px;border-radius:16px;}}
+  .legend{{background:rgba(2,13,5,0.92);color:#a7f3d0;padding:12px 14px;border-radius:12px;border:1px solid rgba(82,183,136,0.3);font-size:12px;max-height:300px;overflow-y:auto;}}
+  .legend-item{{display:flex;align-items:center;gap:8px;padding:4px 0;}}
+  .legend-dot{{width:12px;height:12px;border-radius:50%;flex-shrink:0;}}
+  .info-panel{{background:rgba(2,13,5,0.92);color:#a7f3d0;padding:10px 14px;border-radius:10px;border:1px solid rgba(82,183,136,0.3);font-size:12px;line-height:1.6;}}
+  .route-loading{{background:rgba(255,209,102,0.15);color:#ffd166;padding:6px 12px;border-radius:8px;font-size:11px;text-align:center;border:1px solid rgba(255,209,102,0.3);}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+var map = L.map('map',{{zoomControl:true}}).setView([{R["v_lat"]},{R["v_lon"]}],9);
+
+L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png',{{
+    attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    maxZoom:18
+}}).addTo(map);
+
+var vLat={R["v_lat"]}, vLon={R["v_lon"]};
+var villageName="{vd.replace('"','').replace("'","")}";
+
+// Village star marker
+var villageIcon = L.divIcon({{
+    html:'<div style="background:#ffd166;width:28px;height:28px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 3px 10px rgba(0,0,0,0.5)">🏘️</div>',
+    className:'',iconSize:[28,28],iconAnchor:[14,14]
+}});
+var villageMarker = L.marker([vLat,vLon],{{icon:villageIcon}}).addTo(map);
+villageMarker.bindPopup('<b style="color:#ffd166">🏘️ '+villageName+'</b><br><span style="color:#a7f3d0">Your Village</span>');
+
+var markets = [{markers_js}];
+var routeLayers = [];
+var routeDistances = {{}};
+
+// Colors for route lines
+var routeColors = {ROUTE_COLORS};
+
+function getMarkerIcon(medal, color, rank) {{
+    var size = rank < 3 ? 32 : 26;
+    var bg = color;
+    return L.divIcon({{
+        html:'<div style="background:'+bg+';width:'+size+'px;height:'+size+'px;border-radius:50%;border:2.5px solid rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;font-size:'+(rank<3?14:11)+'px;box-shadow:0 3px 12px rgba(0,0,0,0.6);font-weight:900;color:white;text-shadow:0 1px 3px rgba(0,0,0,0.8)">'+medal+'</div>',
+        className:'',iconSize:[size,size],iconAnchor:[size/2,size/2]
+    }});
+}}
+
+// Fetch real road route from OSRM
+async function fetchRoute(fromLat,fromLon,toLat,toLon,color,weight,opacity) {{
+    try {{
+        var url = 'https://router.project-osrm.org/route/v1/driving/'+fromLon+','+fromLat+';'+toLon+','+toLat+'?overview=full&geometries=geojson';
+        var resp = await fetch(url);
+        var data = await resp.json();
+        if(data.code==='Ok' && data.routes && data.routes.length>0) {{
+            var coords = data.routes[0].geometry.coordinates.map(c => [c[1],c[0]]);
+            var dist = (data.routes[0].distance/1000).toFixed(1);
+            var duration = Math.round(data.routes[0].duration/60);
+            var line = L.polyline(coords, {{color:color,weight:weight,opacity:opacity,lineJoin:'round'}}).addTo(map);
+            routeLayers.push(line);
+            return {{dist:dist, duration:duration}};
+        }}
+    }} catch(e) {{
+        // Fallback to straight line if OSRM fails
+        var line = L.polyline([[fromLat,fromLon],[toLat,toLon]],{{color:color,weight:weight,opacity:opacity,dashArray:'6,4'}}).addTo(map);
+        routeLayers.push(line);
+    }}
+    return null;
+}}
+
+// Add all market markers and fetch routes
+async function loadRoutes() {{
+    for(var i=0;i<markets.length;i++) {{
+        var m = markets[i];
+        var color = routeColors[i % routeColors.length];
+        var weight = i===0 ? 5 : i<3 ? 3 : 2;
+        var opacity = i===0 ? 0.95 : i<3 ? 0.8 : 0.55;
+
+        // Add marker
+        var mk = L.marker([m.lat,m.lon],{{icon:getMarkerIcon(m.medal,m.color,m.rank)}}).addTo(map);
+        var popupContent = '<div style="background:#061209;color:#a7f3d0;padding:10px;border-radius:8px;min-width:200px">'
+            +'<b style="color:'+m.color+';font-size:15px">'+m.medal+' '+m.name+'</b><br>'
+            +'<span style="color:#74c89b;font-size:11px">'+m.cat+'</span><br><hr style="border-color:rgba(82,183,136,0.2);margin:6px 0">'
+            +'💰 <b style="color:#ffd166">'+m.profit+'</b><br>'
+            +'📍 Straight: '+m.dist+'<br>'
+            +'<span id="road-dist-'+i+'">🛣️ Loading road distance...</span><br>'
+            +'📈 Revenue: '+m.rev+'<br>'
+            +'🚛 Transport: '+m.trans
+            +'</div>';
+        mk.bindPopup(popupContent);
+
+        // Fetch road route
+        var result = await fetchRoute(vLat,vLon,m.lat,m.lon,color,weight,opacity);
+        if(result) {{
+            routeDistances[i] = result;
+            // Update popup if open
+            var el = document.getElementById('road-dist-'+i);
+            if(el) el.textContent = '🛣️ Road: '+result.dist+' km ('+result.duration+' min)';
+        }}
+
+        // Small delay to avoid OSRM rate limiting
+        if(i < markets.length-1) await new Promise(r=>setTimeout(r,300));
+    }}
+}}
+
+loadRoutes();
+
+// Legend control
+var legend = L.control({{position:'bottomright'}});
+legend.onAdd = function() {{
+    var div = L.DomUtil.create('div','legend');
+    div.innerHTML = '<b style="color:#74c89b;font-size:11px;text-transform:uppercase;letter-spacing:1px">📍 Markets</b><br>';
+    markets.forEach(function(m,i){{
+        div.innerHTML += '<div class="legend-item"><div class="legend-dot" style="background:'+m.color+'"></div><span>'+m.medal+' '+m.name.substring(0,22)+'</span></div>';
+    }});
+    return div;
+}};
+legend.addTo(map);
+
+// Info control
+var info = L.control({{position:'topright'}});
+info.onAdd = function() {{
+    var div = L.DomUtil.create('div','info-panel');
+    div.innerHTML = '🛣️ <b>Real road routes</b> via OSRM<br><span style="color:#74c89b;font-size:11px">Click markers for details</span>';
+    return div;
+}};
+info.addTo(map);
+</script>
+</body>
+</html>"""
+
+        st.components.v1.html(osm_html, height=600, scrolling=False)
 
     # ── TAB 5: SMART ADVICE (VARIETY-SPECIFIC) ──
     with tab5:
