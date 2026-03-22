@@ -1010,7 +1010,6 @@ with st.sidebar:
     else:
         st.selectbox(tr["lvillage"],["— "+tr["village_ph"]+" —"],disabled=True)
     st.markdown(f"**{tr['lvar']}**")
-    # Custom variety buttons with unique colour per variety
     var_info = [
         ("Banganapalli","banga","🥭"),
         ("Totapuri",    "tota", "🟣"),
@@ -1024,17 +1023,9 @@ with st.sidebar:
         lbl_line1 = lbl_lines[0]
         lbl_line2 = lbl_lines[1] if len(lbl_lines)>1 else ""
         selected = v == st.session_state.variety
-        sel_cls = "sel" if selected else ""
         with vcols[i%2]:
-            st.markdown(f"""
-            <button class="var-btn {cls} {sel_cls}" onclick="
-                var f=window.parent.document.querySelectorAll('button');
-                f.forEach(function(b){{if(b.textContent.trim().includes('{lbl_line1.strip()}')){{b.click();}}}});
-            ">{ico} {lbl_line1}<br><small>{lbl_line2}</small></button>""",
-            unsafe_allow_html=True)
             if st.button(lbl_raw, key=f"v_{v}", use_container_width=True,
-                        type="primary" if selected else "secondary",
-                        label_visibility="collapsed"):
+                        type="primary" if selected else "secondary"):
                 st.session_state.variety = v; st.rerun()
     qty=st.number_input(tr["lqty"],min_value=1,max_value=500,value=10)
     st.markdown("<br>",unsafe_allow_html=True)
@@ -1050,6 +1041,39 @@ with st.sidebar:
         d=p["today"]-p["yesterday"]; ic="🟢" if d>=0 else "🔴"; chg=f"+{d}" if d>=0 else str(d)
         pname = tm(p['place'], lang)
         st.markdown(f"{ic} **{pname[:22]}**  \n₹{p['today']}/kg ({chg})")
+
+# Inject variety button colouring JS — runs after Streamlit renders buttons
+_var_colours = {
+    "Banganapalli": ("linear-gradient(135deg,#c27a00,#f5a623)", "#1a0a00", "0 4px 16px rgba(255,180,0,.5)"),
+    "Totapuri":     ("linear-gradient(135deg,#6c3483,#9b59b6)", "#fff",    "0 4px 16px rgba(155,89,182,.5)"),
+    "Neelam":       ("linear-gradient(135deg,#1a5276,#2980b9)", "#fff",    "0 4px 16px rgba(41,128,185,.5)"),
+    "Rasalu":       ("linear-gradient(135deg,#c0392b,#e74c3c)", "#fff",    "0 4px 16px rgba(231,76,60,.5)"),
+}
+_cur_var = st.session_state.variety
+_var_labels_en = {v: T["en"]["var_labels"][v].split("\n")[0] for v in _var_colours}
+_js_parts = []
+for _v, (_bg, _col, _sh) in _var_colours.items():
+    _lbl = tr["var_labels"][_v].split("\n")[0].replace("'","\\'")
+    _is_sel = "true" if _v == _cur_var else "false"
+    _js_parts.append(f"""
+    (function(){{
+        var sel = {_is_sel};
+        var btns = window.parent.document.querySelectorAll('[data-testid="stSidebar"] button');
+        btns.forEach(function(b){{
+            if(b.innerText.indexOf('{_lbl}') !== -1){{
+                if(sel){{
+                    b.style.background = '{_bg}';
+                    b.style.color = '{_col}';
+                    b.style.border = '2px solid rgba(255,255,255,0.4)';
+                    b.style.boxShadow = '{_sh}';
+                    b.style.transform = 'scale(1.02)';
+                }} else {{
+                    b.style.opacity = '0.65';
+                }}
+            }}
+        }});
+    }})();""")
+st.markdown(f"<script>setTimeout(function(){{ {''.join(_js_parts)} }}, 300);</script>", unsafe_allow_html=True)
 
 if run_clicked:
     if not village_val: st.error("⚠️ Please select your village first!")
