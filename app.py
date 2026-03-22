@@ -1188,14 +1188,17 @@ if st.session_state.results:
         medal = ["First", "Second", "Third"][i]
         top3_text += f"{medal} option: {tm(r['Name'], lang)}, {tc(r['Category'], lang)}, {r['Distance_km']} km away, net profit rupees {r['NetProfit']:,}. "
     
+    lang_voice_map = {"en":"en-IN","te":"te-IN","hi":"hi-IN","ta":"ta-IN","gu":"gu-IN","kn":"kn-IN"}
+    voice_lang = lang_voice_map.get(lang, "en-IN")
+    safe_text = top3_text.replace("`", "'").replace("\\", "")
     voice_js = f"""
     <script>
     function speakResults() {{
         if ('speechSynthesis' in window) {{
             window.speechSynthesis.cancel();
-            var text = `{top3_text.replace("`", "'")}`;
+            var text = `{safe_text}`;
             var utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = '{{"en":"en-IN","te":"te-IN","hi":"hi-IN","ta":"ta-IN","gu":"gu-IN","kn":"kn-IN"}.get(lang, "en-IN") if False else {"en":"en-IN","te":"te-IN","hi":"hi-IN","ta":"ta-IN","gu":"gu-IN","kn":"kn-IN"}[lang]}';
+            utterance.lang = '{voice_lang}';
             utterance.rate = 0.9;
             utterance.pitch = 1.0;
             window.speechSynthesis.speak(utterance);
