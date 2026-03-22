@@ -12,9 +12,16 @@ st.set_page_config(page_title="🥭 Mango Profit Navigator", page_icon="🥭",
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Sans+Gujarati:wght@400;600;700&family=Noto+Sans+Kannada:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Noto+Sans+Telugu:wght@400;500;600;700;800&family=Noto+Sans+Tamil:wght@400;500;600;700;800&family=Noto+Sans+Gujarati:wght@400;500;600;700;800&family=Noto+Sans+Kannada:wght@400;500;600;700;800&display=swap');
 
-* { font-family: 'Baloo 2','Noto Sans Devanagari','Noto Sans Telugu','Noto Sans Tamil','Noto Sans Gujarati','Noto Sans Kannada',sans-serif !important; }
+*, *::before, *::after,
+html, body, div, span, p, h1, h2, h3, h4, h5, h6,
+button, input, select, textarea, label, a,
+[class*='css'], [data-testid], [data-baseweb],
+.stApp, .stMarkdown, .stButton, .stTabs,
+.stSelectbox, .stTextInput, .stNumberInput {
+  font-family: 'Baloo 2','Noto Sans Telugu','Noto Sans Devanagari','Noto Sans Tamil','Noto Sans Gujarati','Noto Sans Kannada',system-ui,sans-serif !important;
+}
 
 /* ── GLOBAL ── */
 .stApp { background: radial-gradient(ellipse at 20% 0%, #0e2d18 0%, #060f09 60%, #040c07 100%) !important; }
@@ -1396,35 +1403,80 @@ if st.session_state.results:
 
     st.markdown("<hr class='section-divider'>",unsafe_allow_html=True)
 
-    # VOICE READ BUTTON — always use English text for reliability
+    # VOICE — build text in the selected language
     lang_voice_map = {"en":"en-IN","te":"te-IN","hi":"hi-IN","ta":"ta-IN","gu":"gu-IN","kn":"kn-IN"}
     voice_lang = lang_voice_map.get(lang, "en-IN")
-    top3_text = f"Namaste {R['farmer_name']}. Here are your top 3 market options. "
+
+    # Language-specific number words and phrase templates
+    voice_templates = {
+        "en": {
+            "greeting": f"Namaste {R['farmer_name']}. Here are your top 3 market options.",
+            "numbers": ["Number 1","Number 2","Number 3"],
+            "km": "kilometres away",
+            "profit": "net profit rupees",
+        },
+        "te": {
+            "greeting": f"నమస్తే {R['farmer_name']}. మీ టాప్ 3 మార్కెట్ ఎంపికలు ఇవి.",
+            "numbers": ["మొదటి ఎంపిక","రెండవ ఎంపిక","మూడవ ఎంపిక"],
+            "km": "కిలోమీటర్లు దూరంలో",
+            "profit": "నికర లాభం రూపాయలు",
+        },
+        "hi": {
+            "greeting": f"नमस्ते {R['farmer_name']}। आपके शीर्ष 3 बाजार विकल्प ये हैं।",
+            "numbers": ["पहला विकल्प","दूसरा विकल्प","तीसरा विकल्प"],
+            "km": "किलोमीटर दूर",
+            "profit": "शुद्ध लाभ रुपये",
+        },
+        "ta": {
+            "greeting": f"வணக்கம் {R['farmer_name']}. உங்கள் சிறந்த 3 சந்தை தேர்வுகள் இவை.",
+            "numbers": ["முதல் தேர்வு","இரண்டாம் தேர்வு","மூன்றாம் தேர்வு"],
+            "km": "கிலோமீட்டர் தொலைவில்",
+            "profit": "நிகர லாபம் ரூபாய்",
+        },
+        "gu": {
+            "greeting": f"નમસ્તે {R['farmer_name']}. તમારા ટોપ 3 બજાર વિકલ્પો આ છે.",
+            "numbers": ["પ્રથમ વિકલ્પ","બીજો વિકલ્પ","ત્રીજો વિકલ્પ"],
+            "km": "કિલોમીટર દૂર",
+            "profit": "ચોખ્ખો નફો રૂપિયા",
+        },
+        "kn": {
+            "greeting": f"ನಮಸ್ಕಾರ {R['farmer_name']}. ನಿಮ್ಮ ಅಗ್ರ 3 ಮಾರುಕಟ್ಟೆ ಆಯ್ಕೆಗಳು ಇವು.",
+            "numbers": ["ಮೊದಲ ಆಯ್ಕೆ","ಎರಡನೇ ಆಯ್ಕೆ","ಮೂರನೇ ಆಯ್ಕೆ"],
+            "km": "ಕಿಲೋಮೀಟರ್ ದೂರದಲ್ಲಿ",
+            "profit": "ನಿವ್ವಳ ಲಾಭ ರೂಪಾಯಿ",
+        },
+    }
+    vt = voice_templates.get(lang, voice_templates["en"])
+    top3_parts = [vt["greeting"]]
     for i, r in enumerate(top10[:3]):
-        medal = ["Number 1","Number 2","Number 3"][i]
-        top3_text += f"{medal}: {r['Name']}, {r['Category']}, {r['Distance_km']} kilometres away, net profit rupees {r['NetProfit']:,}. "
-    safe_text = top3_text.replace("'","").replace('"',"").replace("\\","").replace("\n"," ")
+        mname = tm(r["Name"], lang)
+        cat_name = tc(r["Category"], lang)
+        top3_parts.append(
+            f"{vt['numbers'][i]}: {mname}, {cat_name}, "
+            f"{r['Distance_km']} {vt['km']}, "
+            f"{vt['profit']} {r['NetProfit']:,}."
+        )
+    safe_text = " ".join(top3_parts).replace("'","").replace('"',"").replace("\\","").replace("\n"," ")
     vbtn_label = tr["voice_btn"].replace("🔊 ","")
 
-    # Use st.components.v1.html — this renders in its own iframe with allow="autoplay" 
-    # which enables speechSynthesis properly unlike st.markdown
     voice_html = f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Noto+Sans+Telugu:wght@700&family=Noto+Sans+Devanagari:wght@700&family=Noto+Sans+Tamil:wght@700&family=Noto+Sans+Gujarati:wght@700&family=Noto+Sans+Kannada:wght@700&display=swap" rel="stylesheet">
 <style>
-body{{margin:0;padding:0;background:transparent;}}
+body{{margin:0;padding:4px 0;background:transparent;}}
 .vfab{{
     display:inline-flex;align-items:center;gap:10px;
     background:linear-gradient(135deg,#0f3d22,#1e6b3e);
     border:2px solid #3cb87a;border-radius:50px;
     padding:13px 28px;color:#a7f3d0;font-weight:900;font-size:15px;
-    cursor:pointer;font-family:'Segoe UI',sans-serif;letter-spacing:.3px;
+    cursor:pointer;letter-spacing:.3px;
+    font-family:'Baloo 2','Noto Sans Telugu','Noto Sans Devanagari','Noto Sans Tamil','Noto Sans Gujarati','Noto Sans Kannada',sans-serif;
     box-shadow:0 6px 24px rgba(0,0,0,.5);transition:all .25s;
     animation:spk 2.5s ease-in-out infinite;
 }}
 .vfab:hover{{transform:translateY(-3px);box-shadow:0 10px 30px rgba(60,184,122,.4);}}
 .vfab.on{{background:linear-gradient(135deg,#6b1010,#9e1c1c);border-color:#e74c3c;color:#ffd0d0;animation:none;}}
-.wb{{display:inline-block;width:4px;border-radius:3px;background:currentColor;margin:0 2px;vertical-align:middle;}}
-.wb{{animation:wba .55s ease-in-out infinite;height:4px;}}
+.wb{{display:inline-block;width:4px;border-radius:3px;background:currentColor;margin:0 2px;vertical-align:middle;height:4px;animation:wba .55s ease-in-out infinite;}}
 .wb:nth-child(2){{animation-delay:.11s}}.wb:nth-child(3){{animation-delay:.22s}}.wb:nth-child(4){{animation-delay:.33s}}
 @keyframes wba{{0%,100%{{height:3px}}50%{{height:16px}}}}
 @keyframes spk{{0%,100%{{box-shadow:0 6px 24px rgba(0,0,0,.5),0 0 0 0 rgba(60,184,122,.4)}}50%{{box-shadow:0 6px 24px rgba(0,0,0,.5),0 0 0 10px rgba(60,184,122,0)}}}}
@@ -1440,51 +1492,58 @@ body{{margin:0;padding:0;background:transparent;}}
 var speaking = false;
 var synth = window.speechSynthesis;
 var theText = "{safe_text}";
+var voiceLang = "{voice_lang}";
+var btnLabel = "{vbtn_label}";
 
-function toggle() {{
-    if (!synth) {{ alert('Voice not supported. Use Chrome browser.'); return; }}
-    if (speaking) {{
-        synth.cancel();
-        speaking = false;
-        document.getElementById('btn').classList.remove('on');
-        document.getElementById('bars').style.display = 'none';
-        document.getElementById('lbl').textContent = '{vbtn_label}';
-        return;
-    }}
-    synth.cancel();
+function doSpeak() {{
     var u = new SpeechSynthesisUtterance(theText);
-    u.lang = 'en-IN';
-    u.rate = 0.88;
-    u.pitch = 1.05;
-    u.volume = 1.0;
+    u.lang = voiceLang;
+    u.rate = 0.88; u.pitch = 1.05; u.volume = 1.0;
+
+    // Try to find a matching voice for the language
+    var voices = synth.getVoices();
+    var matched = voices.filter(function(v) {{
+        return v.lang.startsWith(voiceLang.split('-')[0]);
+    }});
+    if (matched.length > 0) u.voice = matched[0];
+
     u.onstart = function() {{
         speaking = true;
         document.getElementById('btn').classList.add('on');
         document.getElementById('bars').style.display = 'inline';
         document.getElementById('lbl').textContent = '⏹ Stop';
     }};
-    u.onend = function() {{
+    u.onend = u.onerror = function() {{
         speaking = false;
         document.getElementById('btn').classList.remove('on');
         document.getElementById('bars').style.display = 'none';
-        document.getElementById('lbl').textContent = '{vbtn_label}';
+        document.getElementById('lbl').textContent = btnLabel;
     }};
-    u.onerror = function(e) {{
-        speaking = false;
+    synth.speak(u);
+}}
+
+function toggle() {{
+    if (!synth) {{ alert('Voice not supported. Use Chrome or Edge browser.'); return; }}
+    if (speaking) {{
+        synth.cancel(); speaking = false;
         document.getElementById('btn').classList.remove('on');
         document.getElementById('bars').style.display = 'none';
-        document.getElementById('lbl').textContent = '{vbtn_label}';
-    }};
-    // Chrome requires voices to be loaded first
+        document.getElementById('lbl').textContent = btnLabel;
+        return;
+    }}
+    synth.cancel();
     var voices = synth.getVoices();
     if (voices.length === 0) {{
-        synth.onvoiceschanged = function() {{ synth.speak(u); synth.onvoiceschanged = null; }};
+        synth.onvoiceschanged = function() {{
+            synth.onvoiceschanged = null;
+            doSpeak();
+        }};
     }} else {{
-        synth.speak(u);
+        doSpeak();
     }}
 }}
-// Pre-load voices on page load
-if (synth.getVoices) synth.getVoices();
+// Pre-load voices
+if (synth && synth.getVoices) synth.getVoices();
 </script>
 </body></html>"""
 
@@ -1837,23 +1896,120 @@ info.addTo(map);
         st.markdown('''<div style="background:linear-gradient(135deg,rgba(13,46,26,0.9),rgba(6,18,9,0.95));border:1px solid rgba(82,183,136,0.25);border-radius:16px;padding:22px;text-align:center;margin-top:20px"><div style="font-size:36px;margin-bottom:10px">🌾 &nbsp; 🥭 &nbsp; 💚 &nbsp; 🌿 &nbsp; 🏡 &nbsp; 🚛 &nbsp; 💰</div><p style="color:#74c89b;font-size:14px;margin:0;font-weight:600">Empowering Indian Farmers with Market Intelligence 🇮🇳</p></div>''',unsafe_allow_html=True)
 
 else:
-    st.markdown(f'''<div style="text-align:center;padding:60px 20px">
-      <div class="float-mango" style="font-size:80px">🥭</div>
-      <h2 style="color:#a7f3d0;margin:20px 0 10px;font-size:2rem;font-weight:900">{tr["wctitle"]}</h2>
-      <p style="color:#52b788;max-width:480px;margin:0 auto;line-height:1.8;font-size:15px">{tr["wcsub"]}</p>
-    </div>''',unsafe_allow_html=True)
+    # Animated welcome screen with walking farmer
+    st.markdown(f"""
+    <style>
+    @keyframes walk {{
+        0%   {{ transform: translateX(-120px) scaleX(1); }}
+        45%  {{ transform: translateX(calc(50vw - 80px)) scaleX(1); }}
+        50%  {{ transform: translateX(calc(50vw - 80px)) scaleX(-1); }}
+        95%  {{ transform: translateX(-120px) scaleX(-1); }}
+        100% {{ transform: translateX(-120px) scaleX(1); }}
+    }}
+    @keyframes groundMove {{
+        0%   {{ background-position: 0 0; }}
+        100% {{ background-position: -200px 0; }}
+    }}
+    @keyframes sunPulse {{
+        0%,100% {{ transform: scale(1) rotate(0deg); opacity:.9; }}
+        50%      {{ transform: scale(1.08) rotate(8deg); opacity:1; }}
+    }}
+    @keyframes cloudDrift {{
+        0%   {{ transform: translateX(0); }}
+        100% {{ transform: translateX(60px); }}
+    }}
+    @keyframes mangoSwing {{
+        0%,100% {{ transform: rotate(-8deg); }}
+        50%      {{ transform: rotate(8deg); }}
+    }}
+    @keyframes fadeInUp {{
+        from {{ opacity:0; transform:translateY(20px); }}
+        to   {{ opacity:1; transform:translateY(0); }}
+    }}
+    .farmer-scene {{
+        position:relative; width:100%; height:220px;
+        background:linear-gradient(180deg,#0a1f12 0%,#0d2e1a 60%,#163d22 100%);
+        border-radius:20px; overflow:hidden; margin-bottom:20px;
+        border:1px solid rgba(82,183,136,0.2);
+        box-shadow:0 8px 32px rgba(0,0,0,0.5);
+    }}
+    .scene-ground {{
+        position:absolute; bottom:0; left:0; right:0; height:50px;
+        background:repeating-linear-gradient(90deg,#1a4a22 0,#1a4a22 30px,#163d22 30px,#163d22 60px);
+        animation:groundMove 2s linear infinite;
+    }}
+    .scene-sun {{
+        position:absolute; top:18px; right:60px; font-size:42px;
+        animation:sunPulse 3s ease-in-out infinite;
+    }}
+    .scene-cloud1 {{
+        position:absolute; top:22px; left:80px; font-size:28px; opacity:.7;
+        animation:cloudDrift 8s ease-in-out infinite alternate;
+    }}
+    .scene-cloud2 {{
+        position:absolute; top:40px; left:200px; font-size:20px; opacity:.5;
+        animation:cloudDrift 11s ease-in-out infinite alternate-reverse;
+    }}
+    .scene-tree1 {{
+        position:absolute; bottom:45px; right:90px; font-size:52px;
+        animation:mangoSwing 4s ease-in-out infinite;
+        transform-origin:bottom center;
+    }}
+    .scene-tree2 {{
+        position:absolute; bottom:45px; right:180px; font-size:40px;
+        animation:mangoSwing 5s ease-in-out infinite 1s;
+        transform-origin:bottom center;
+    }}
+    .scene-farmer {{
+        position:absolute; bottom:44px; font-size:44px;
+        animation:walk 7s linear infinite;
+        display:inline-block;
+    }}
+    .scene-mango-fly {{
+        position:absolute; top:60px; left:45%; font-size:22px;
+        animation:mangoSwing 2s ease-in-out infinite;
+    }}
+    .welcome-text {{
+        animation:fadeInUp .8s ease both;
+        text-align:center; padding:10px 0 0;
+    }}
+    </style>
+
+    <div class="farmer-scene">
+        <div class="scene-cloud1">☁️</div>
+        <div class="scene-cloud2">☁️</div>
+        <div class="scene-sun">🌞</div>
+        <div class="scene-tree1">🌳</div>
+        <div class="scene-tree2">🌴</div>
+        <div class="scene-mango-fly">🥭</div>
+        <div class="scene-farmer">👨‍🌾</div>
+        <div class="scene-ground"></div>
+    </div>
+
+    <div class="welcome-text">
+      <h2 style="color:#a7f3d0;margin:0 0 10px;font-size:2rem;font-weight:900;
+          background:linear-gradient(135deg,#a7f3d0,#ffd166);
+          -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+        {tr["wctitle"]}
+      </h2>
+      <p style="color:#52b788;max-width:520px;margin:0 auto;line-height:1.8;font-size:15px;font-weight:500">
+        {tr["wcsub"]}
+      </p>
+    </div>
+    """, unsafe_allow_html=True)
+
     w1,w2,w3=st.columns(3)
     for col,(icon,title,sub) in zip([w1,w2,w3],[
-        ("📍","Pick Your Village","Find all nearby markets within 200km"),
-        ("🥭","Choose Your Variety","Matched to the right buyers for your mango"),
-        ("💰","See Top 3 Profits","Compare all options and pick the best deal")
+        ("📍", tr.get("wc1_title","Pick Your Village"),    tr.get("wc1_sub","Find all nearby markets within 200km")),
+        ("🥭", tr.get("wc2_title","Choose Your Variety"),  tr.get("wc2_sub","Matched to the right buyers for your mango")),
+        ("💰", tr.get("wc3_title","See Top 3 Profits"),    tr.get("wc3_sub","Compare all options and pick the best deal")),
     ]):
         with col:
             st.markdown(f'''<div class="wc-feature">
               <div class="wc-feat-icon">{icon}</div>
-              <div style="font-weight:800;color:#a7f3d0;font-size:15px;margin-bottom:6px">{title}</div>
-              <div style="font-size:13px;color:#52b788">{sub}</div>
-            </div>''',unsafe_allow_html=True)
+              <div class="wc-title">{title}</div>
+              <div class="wc-sub">{sub}</div>
+            </div>''', unsafe_allow_html=True)
 
 st.markdown('''<div style="text-align:center;color:#2d6a4f;font-size:12px;padding:20px 0;margin-top:24px;border-top:1px solid rgba(82,183,136,0.15)">
   🥭 Farmer\'s Mango Profit Navigator &nbsp;·&nbsp; Empowering farmers across Andhra Pradesh &nbsp;·&nbsp; 🇮🇳 Made in India
