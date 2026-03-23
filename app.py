@@ -4,7 +4,7 @@ import pandas as pd
 import math
 import plotly.graph_objects as go
 import plotly.express as px
-import json, hashlib, os
+import json, hashlib, os, re
 from datetime import datetime
 
 st.set_page_config(page_title="🥭 Mango Profit Navigator", page_icon="🥭",
@@ -1046,30 +1046,30 @@ VILLAGES=[
 ]
 
 PRICES=[
-{"place":"Tirupati APMC (RC Road)","lat":13.6231,"lon":79.4125,"today":29,"yesterday":34},
-{"place":"Pakala Main Mango APMC","lat":13.4568,"lon":79.1174,"today":27,"yesterday":32},
+{"place":"Tirupati APMC (RC Road)","lat":13.6231,"lon":79.4125,"today":36,"yesterday":31},
+{"place":"Pakala Main Mango APMC","lat":13.4568,"lon":79.1174,"today":34,"yesterday":30},
 {"place":"Railway Kodur APMC Yard","lat":13.9515,"lon":79.3514,"today":28,"yesterday":33},
-{"place":"Puttur Mango Market Yard","lat":13.4428,"lon":79.5531,"today":41,"yesterday":44},
-{"place":"Chandragiri APMC","lat":13.5828,"lon":79.3142,"today":25,"yesterday":30},
-{"place":"Srikalahasti APMC","lat":13.7498,"lon":79.7034,"today":30,"yesterday":35},
-{"place":"Venkatagiri APMC","lat":13.9575,"lon":79.5847,"today":28,"yesterday":33},
-{"place":"Nagalapuram APMC","lat":13.3985,"lon":79.7915,"today":27,"yesterday":32},
-{"place":"Naidupeta APMC","lat":13.9142,"lon":79.8944,"today":29,"yesterday":34},
-{"place":"Satyavedu APMC","lat":13.5076,"lon":79.9715,"today":26,"yesterday":31},
-{"place":"Sullurpeta APMC","lat":13.7008,"lon":80.0211,"today":25,"yesterday":30},
-{"place":"Bangarupalem","lat":13.2,"lon":78.9333,"today":34,"yesterday":42},
-{"place":"Chittoor","lat":13.2172,"lon":79.1003,"today":36,"yesterday":39},
-{"place":"Punganur","lat":13.3667,"lon":78.5667,"today":29,"yesterday":36},
-{"place":"Pakala","lat":13.4667,"lon":79.1167,"today":37,"yesterday":41},
-{"place":"Pileru","lat":13.65,"lon":78.95,"today":34,"yesterday":39},
-{"place":"Madanapalle AMC","lat":13.6114,"lon":78.4716,"today":33,"yesterday":40},
-{"place":"Gurramkonda e-NAM","lat":13.782,"lon":78.584,"today":39,"yesterday":45},
-{"place":"Galiveedu Market Yard","lat":14.1035,"lon":78.5142,"today":36,"yesterday":43},
-{"place":"Jamiya Mango Yard","lat":14.0562,"lon":78.751,"today":38,"yesterday":45},
-{"place":"Nimmanapalle Yard","lat":13.5932,"lon":78.6011,"today":38,"yesterday":44},
-{"place":"Burakayalakota Hub","lat":13.801,"lon":78.354,"today":39,"yesterday":41},
-{"place":"Nandini Private Mandi","lat":13.5824,"lon":78.5025,"today":37,"yesterday":39},
-{"place":"Chowdepalle Yard","lat":13.4116,"lon":78.6148,"today":36,"yesterday":45},
+{"place":"Puttur Mango Market Yard","lat":13.4428,"lon":79.5531,"today":45,"yesterday":41},
+{"place":"Chandragiri APMC","lat":13.5828,"lon":79.3142,"today":32,"yesterday":28},
+{"place":"Srikalahasti APMC","lat":13.7498,"lon":79.7034,"today":38,"yesterday":35},
+{"place":"Venkatagiri APMC","lat":13.9575,"lon":79.5847,"today":29,"yesterday":33},
+{"place":"Nagalapuram APMC","lat":13.3985,"lon":79.7915,"today":31,"yesterday":27},
+{"place":"Naidupeta APMC","lat":13.9142,"lon":79.8944,"today":27,"yesterday":31},
+{"place":"Satyavedu APMC","lat":13.5076,"lon":79.9715,"today":33,"yesterday":29},
+{"place":"Sullurpeta APMC","lat":13.7008,"lon":80.0211,"today":30,"yesterday":25},
+{"place":"Bangarupalem","lat":13.2,"lon":78.9333,"today":42,"yesterday":38},
+{"place":"Chittoor","lat":13.2172,"lon":79.1003,"today":37,"yesterday":41},
+{"place":"Punganur","lat":13.3667,"lon":78.5667,"today":40,"yesterday":35},
+{"place":"Pakala","lat":13.4667,"lon":79.1167,"today":39,"yesterday":43},
+{"place":"Pileru","lat":13.65,"lon":78.95,"today":43,"yesterday":38},
+{"place":"Madanapalle AMC","lat":13.6114,"lon":78.4716,"today":38,"yesterday":34},
+{"place":"Gurramkonda e-NAM","lat":13.782,"lon":78.584,"today":44,"yesterday":48},
+{"place":"Galiveedu Market Yard","lat":14.1035,"lon":78.5142,"today":41,"yesterday":37},
+{"place":"Jamiya Mango Yard","lat":14.0562,"lon":78.751,"today":46,"yesterday":42},
+{"place":"Nimmanapalle Yard","lat":13.5932,"lon":78.6011,"today":35,"yesterday":40},
+{"place":"Burakayalakota Hub","lat":13.801,"lon":78.354,"today":47,"yesterday":43},
+{"place":"Nandini Private Mandi","lat":13.5824,"lon":78.5025,"today":33,"yesterday":38},
+{"place":"Chowdepalle Yard","lat":13.4116,"lon":78.6148,"today":42,"yesterday":38},
 ]
 PROCESSING=[
 {"name":"Galla Foods Rayachoti","lat":14.0585,"lon":78.749},{"name":"Roshan Fruits India","lat":13.6517,"lon":78.9415},
@@ -1393,6 +1393,30 @@ if st.session_state.results:
     vbtn_label = tr["voice_btn"].replace("🔊 ","")
     vstop_label = tr["voice_stop"].replace("⏹ ","")
 
+    # Split text into sentences for chunked Google TTS (max 200 chars per chunk)
+    def split_chunks(text, maxlen=180):
+        sentences = re.split(r'(?<=[।.।!?])\s+', text)
+        chunks, cur = [], ""
+        for s in sentences:
+            if len(cur) + len(s) + 1 <= maxlen:
+                cur = (cur + " " + s).strip()
+            else:
+                if cur: chunks.append(cur)
+                cur = s[:maxlen]
+        if cur: chunks.append(cur)
+        return chunks
+
+    # Google Translate TTS — works for all Indian languages, high quality
+    gtts_lang_map = {"te":"te","ta":"ta","kn":"kn","gu":"gu","hi":"hi","en":"en"}
+    gtts_lang = gtts_lang_map.get(lang, "en")
+
+    # For regional langs without reliable browser TTS, use Google TTS audio approach
+    # We pass chunks as JS array and play them sequentially via Audio objects
+    use_gtts = lang in ["te","ta","kn","gu"]  # these lack browser voices
+
+    chunks = split_chunks(safe_text)
+    chunks_js = json.dumps(chunks)
+
     voice_html = f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Noto+Sans+Telugu:wght@700&family=Noto+Sans+Devanagari:wght@700&family=Noto+Sans+Tamil:wght@700&family=Noto+Sans+Gujarati:wght@700&family=Noto+Sans+Kannada:wght@700&display=swap" rel="stylesheet">
@@ -1404,13 +1428,13 @@ body{{margin:0;padding:4px 0;background:transparent;}}
     border:2px solid rgba(255,165,0,0.7);border-radius:50px;
     padding:14px 30px;color:#ffd166;font-weight:900;font-size:15px;
     cursor:pointer;letter-spacing:.3px;
-    font-family:'Baloo 2','Noto Sans Telugu','Noto Sans Devanagari',sans-serif;
-    box-shadow:0 6px 24px rgba(0,0,0,.5),0 0 0 0 rgba(255,165,0,0);
-    transition:all .25s;
+    font-family:'Baloo 2','Noto Sans Telugu','Noto Sans Devanagari','Noto Sans Tamil','Noto Sans Gujarati','Noto Sans Kannada',sans-serif;
+    box-shadow:0 6px 24px rgba(0,0,0,.5);transition:all .25s;
     animation:spk 2.5s ease-in-out infinite;
 }}
 .vfab:hover{{transform:translateY(-3px);box-shadow:0 12px 32px rgba(255,165,0,.5);}}
 .vfab.on{{background:linear-gradient(135deg,#6b1010,#9e1c1c);border-color:rgba(231,76,60,.7);color:#ffd0d0;animation:none;}}
+.status{{font-size:11px;color:#74c89b;margin-top:4px;display:none;font-family:inherit;}}
 .wb{{display:inline-block;width:4px;border-radius:3px;background:currentColor;margin:0 2px;vertical-align:middle;height:4px;animation:wba .55s ease-in-out infinite;}}
 .wb:nth-child(2){{animation-delay:.11s}}.wb:nth-child(3){{animation-delay:.22s}}.wb:nth-child(4){{animation-delay:.33s}}
 @keyframes wba{{0%,100%{{height:3px}}50%{{height:16px}}}}
@@ -1423,51 +1447,98 @@ body{{margin:0;padding:4px 0;background:transparent;}}
     <span class="wb"></span><span class="wb"></span><span class="wb"></span><span class="wb"></span>
   </span>
 </button>
+<div class="status" id="status"></div>
 <script>
 var speaking = false;
 var synth = window.speechSynthesis;
-var theText = `{safe_text}`;
+var fullText = `{safe_text}`;
+var chunks = {chunks_js};
 var voiceLang = "{voice_lang}";
+var gttsLang = "{gtts_lang}";
+var useGtts = {str(use_gtts).lower()};
 var btnLabel = "{vbtn_label}";
 var stopLabel = "{vstop_label}";
+var audioQueue = [];
+var currentAudio = null;
+var chunkIdx = 0;
 
-function doSpeak() {{
-    var u = new SpeechSynthesisUtterance(theText);
+function setOn() {{
+    speaking = true;
+    document.getElementById('btn').classList.add('on');
+    document.getElementById('bars').style.display = 'inline';
+    document.getElementById('lbl').textContent = stopLabel;
+}}
+function setOff() {{
+    speaking = false;
+    document.getElementById('btn').classList.remove('on');
+    document.getElementById('bars').style.display = 'none';
+    document.getElementById('lbl').textContent = btnLabel;
+    chunkIdx = 0;
+    currentAudio = null;
+}}
+
+// ── STRATEGY 1: Google Translate TTS (for Telugu, Tamil, Kannada, Gujarati) ──
+// Plays each sentence chunk as audio sequentially for natural-sounding speech
+function playGttsSentence(idx) {{
+    if (!speaking || idx >= chunks.length) {{ setOff(); return; }}
+    var txt = chunks[idx];
+    var url = 'https://translate.google.com/translate_tts?ie=UTF-8&tl=' + gttsLang +
+              '&client=tw-ob&q=' + encodeURIComponent(txt);
+    var audio = new Audio(url);
+    audio.volume = 1.0;
+    currentAudio = audio;
+    audio.onended = function() {{ if (speaking) playGttsSentence(idx + 1); }};
+    audio.onerror = function() {{
+        // Google TTS blocked/failed — fallback to Web Speech for this chunk
+        speakWithBrowser(chunks.slice(idx).join(' '));
+    }};
+    audio.play().catch(function() {{
+        // Autoplay blocked — try Web Speech fallback
+        speakWithBrowser(chunks.slice(idx).join(' '));
+    }});
+}}
+
+// ── STRATEGY 2: Web Speech API (primary for Hindi/English, fallback for others) ──
+function speakWithBrowser(text) {{
+    var u = new SpeechSynthesisUtterance(text);
     u.lang = voiceLang;
-    u.rate = 0.85; u.pitch = 1.05; u.volume = 1.0;
+    u.rate = 0.82;
+    u.pitch = 1.0;
+    u.volume = 1.0;
     var voices = synth.getVoices();
-    // Try exact language match first, then partial
+    // Try exact match → partial match → any Indian English voice → default
     var matched = voices.filter(v => v.lang === voiceLang);
     if (!matched.length) matched = voices.filter(v => v.lang.startsWith(voiceLang.split('-')[0]));
+    if (!matched.length && voiceLang !== 'en-IN') {{
+        matched = voices.filter(v => v.lang === 'en-IN' || v.lang === 'hi-IN');
+    }}
     if (matched.length) u.voice = matched[0];
-    u.onstart = function() {{
-        speaking = true;
-        document.getElementById('btn').classList.add('on');
-        document.getElementById('bars').style.display = 'inline';
-        document.getElementById('lbl').textContent = stopLabel;
-    }};
-    u.onend = u.onerror = function() {{
-        speaking = false;
-        document.getElementById('btn').classList.remove('on');
-        document.getElementById('bars').style.display = 'none';
-        document.getElementById('lbl').textContent = btnLabel;
-    }};
+    u.onstart = function() {{ setOn(); }};
+    u.onend = function() {{ setOff(); }};
+    u.onerror = function() {{ setOff(); }};
     synth.speak(u);
 }}
 
 function toggle() {{
-    if (!synth) {{ alert('Voice not supported. Please use Chrome or Edge browser.'); return; }}
     if (speaking) {{
-        synth.cancel(); speaking = false;
-        document.getElementById('btn').classList.remove('on');
-        document.getElementById('bars').style.display = 'none';
-        document.getElementById('lbl').textContent = btnLabel;
+        // Stop everything
+        if (currentAudio) {{ currentAudio.pause(); currentAudio = null; }}
+        synth.cancel();
+        setOff();
         return;
     }}
-    synth.cancel();
-    if (synth.getVoices().length === 0) {{
-        synth.onvoiceschanged = function() {{ synth.onvoiceschanged = null; doSpeak(); }};
-    }} else {{ doSpeak(); }}
+    setOn();
+    if (useGtts) {{
+        // Use Google TTS for regional languages — much better quality
+        playGttsSentence(0);
+    }} else {{
+        // Use browser Web Speech for Hindi and English
+        if (synth.getVoices().length === 0) {{
+            synth.onvoiceschanged = function() {{ synth.onvoiceschanged = null; speakWithBrowser(fullText); }};
+        }} else {{
+            speakWithBrowser(fullText);
+        }}
+    }}
 }}
 if (synth && synth.getVoices) synth.getVoices();
 </script>
